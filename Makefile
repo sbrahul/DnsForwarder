@@ -6,6 +6,7 @@ OBJDIR = obj
 
 SRCS = $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
+HDRS = $(wildcard $(SRCDIR)/*.h)
 
 .PHONY: all clean dir
 
@@ -17,7 +18,7 @@ dir:
 $(TARGET): $(OBJS)
 	$(CXX) $^ -o $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HDRS)
 	$(CXX) $(CFLAGS) $(COMPFLAGS) -c $< -o $@
 
 clean:

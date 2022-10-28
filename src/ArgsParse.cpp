@@ -1,5 +1,6 @@
 // LOCAL INCLUDES
 #include "ArgsParse.h"
+#include "Utils.h"
 
 // SYSTEM INCLUDES
 #include <arpa/inet.h>
@@ -20,9 +21,9 @@ namespace DnsFwd::ArgsParse
 
         uint32_t ip = 0;
         // extract IP
-        if (inet_pton(AF_INET, argv[1], &ip) != 1)
+        if (!DnsFwd::Utils::Ipv4ToNetwork(argv[1], &ip))
         {
-            perror("Unable to parse IPv4 address");
+            std::cerr << "ArgsParse::Parse - Bad IP value\n";
             return bad_ret;
         }
 

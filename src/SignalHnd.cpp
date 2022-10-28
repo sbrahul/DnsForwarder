@@ -14,13 +14,13 @@ namespace DnsFwd::SignalHnd
         sigemptyset(&sa.sa_mask);
         sa.sa_handler = fn;
         int rc = sigaction(sig, &sa, NULL) != 0;
-        if (!rc)
+        if (rc)
         {
             perror("Failed to register signal");
         }
 
-        // Convert number to boolean
-        return !!rc;
+        // sigaction returns 0 on success and this function should return true
+        return (rc) ? false : true;
     }
 }
 
