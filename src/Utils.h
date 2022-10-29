@@ -9,17 +9,17 @@ struct in6_addr;
 
 namespace DnsFwd::Utils
 {
-    bool Ipv4ToNetwork(const char *ip, uint32_t* ipNetwork);
-    bool Ipv6ToNetwork(const char *ip, struct in6_addr* ipNetwork);
+    bool Ipv4ToNetwork(const char *a_Ip, uint32_t* a_IpNetwork);
+    bool Ipv6ToNetwork(const char *a_Ip, struct in6_addr* a_IpNetwork);
 
     // Helper to deallocate resources for c functions like socket
     template <typename T, typename Q>
     class AutoDealloc
     {
       public:
-        explicit AutoDealloc(const T& resource, Q callback)
-            : m_Resource(resource),
-              m_Callback(callback)
+        explicit AutoDealloc(const T& a_Resource, Q a_Callback)
+            : m_Resource(a_Resource),
+              m_Callback(a_Callback)
         {
         }
         ~AutoDealloc()

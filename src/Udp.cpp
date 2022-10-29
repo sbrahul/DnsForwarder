@@ -13,7 +13,8 @@
 
 DnsFwd::Udp::Server::Server(const char* a_Ip, uint16_t a_Port)
     : m_ListenPort(a_Port),
-      m_ListenIp(a_Ip)
+      m_ListenIp(a_Ip),
+      m_RecvBuffer(new uint8_t[MAX_BUF_SIZE])
 {
 }
 
@@ -68,25 +69,103 @@ DnsFwd::Udp::Server::CreateAndBind()
 	return true;
 }
 
-uint32_t DnsFwd::Udp::Server::Recv(uint8_t* a_Buffer, uint32_t a_Size, struct sockaddr_in6* a_Saddr)
+DnsFwd::Packet DnsFwd::Udp::Server::Recv()
 {
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(m_ServFd, &fds);
+    // select can modify timeout val. So, take a copy.
+    struct timeval tout = m_Timeout;
+    int s_ret = select(m_ServFd+1, &fds, NULL, NULL, &tout);
+    if (-1 == s_ret)
+    {
+        perror("Select call fail");
+        return Packet();
+    }
+    else if (0 == s_ret)
+    {
+        // either timed out or interrupt
+        return Packet();
+    }
     // not performing sanity checks on args
-    socklen_t saddr_size = sizeof(decltype(*a_Saddr));
-    memset(a_Buffer, 0, a_Size);
-    memset(a_Saddr, 0, saddr_size);
-    int bytes = recvfrom(m_ServFd, a_Buffer, a_Size, 0,
-                         (struct sockaddr*) a_Saddr, &saddr_size);
-    std::cout << "Returned from recvfrom\n";
+    struct sockaddr_in6 saddr = {0};
+    socklen_t saddr_size = sizeof(saddr);
+    memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
+    int bytes = recvfrom(m_ServFd, m_RecvBuffer.get(), MAX_BUF_SIZE, 0,
+                         (struct sockaddr*) &saddr, &saddr_size);
     if (bytes < 1)
     {
-        // If interrupted, no need to print error
-	    if (EINTR != errno)
-        {
-            perror("Failed to receive data");
-        }
-        return 0;
+        perror("Failed to receive data");
+        return Packet();
+    }
+    else if (0 == bytes)
+    {
+        return Packet();
     }
 
-    return bytes;
+    // Valid data
+    return Packet(m_RecvBuffer.get(), bytes, saddr);
 }
 
+void
+DnsFwd::Udp::Server::SendTo(const DnsFwd::Packet& a_Pkt,
+                            struct sockaddr_in6 a_Saddr)
+{
+    if (-1 == sendto(m_ServFd, a_Pkt.Get(), a_Pkt.Size(), 0,
+                     (struct sockaddr*) &a_Saddr, sizeof a_Saddr))
+    {
+        perror("sending packet failed");
+    }
+}
+
+DnsFwd::Packet DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip, uint16_t a_Port)
+{
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (-1 == fd)
+    {
+        perror("Failed to create send socket");
+        return Packet();
+    }
+    DnsFwd::Utils::AutoDealloc<int, decltype(&close)> fd_ad(fd, &close);
+
+    struct sockaddr_in saddr = {0};
+    saddr.sin_family = AF_INET;
+    saddr.sin_addr.s_addr = a_Ip;
+    saddr.sin_port = htons(a_Port);
+
+    if (-1 == sendto(fd, a_Pkt.Get(), a_Pkt.Size(), 0, (struct sockaddr *)&saddr, sizeof saddr))
+    {
+        perror("sending upstream failed");
+        return Packet();
+    }
+
+    // Get response
+    // TODO: Code is common to Recv. Refactor
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    // Have a 5 second timeout
+    struct timeval tout = {5, 0};
+    int s_ret = select(fd+1, &fds, NULL, NULL, &tout);
+    if (-1 == s_ret)
+    {
+        perror("Select call fail");
+        return Packet();
+    }
+    std::unique_ptr<uint8_t[]> recv_buf(new uint8_t[Server::MAX_BUF_SIZE]);
+    socklen_t saddr_size = sizeof saddr;
+    int bytes = recvfrom(fd, recv_buf.get(), Server::MAX_BUF_SIZE, 0,
+                         (struct sockaddr*) &saddr, &saddr_size);
+    if (bytes < 1)
+    {
+        perror("Failed to receive data");
+        return Packet();
+    }
+    else if (0 == bytes)
+    {
+        return Packet();
+    }
+
+    // Valid data
+    return Packet(recv_buf.get(), bytes, saddr);
+}

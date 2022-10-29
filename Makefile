@@ -1,5 +1,6 @@
 TARGET = DnsFwder
 CXX ?= g++
+#CFLAGS ?= -fsanitize=address
 COMPFLAGS = -g -O0 -fPIC -std=c++17 -Wall
 SRCDIR = src
 OBJDIR = obj
@@ -16,7 +17,7 @@ dir:
 	@mkdir -p $(OBJDIR)
 
 $(TARGET): $(OBJS)
-	$(CXX) $^ -o $@
+	$(CXX) $(CFLAGS) $(COMPFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HDRS)
 	$(CXX) $(CFLAGS) $(COMPFLAGS) -c $< -o $@

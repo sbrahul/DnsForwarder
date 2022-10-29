@@ -6,6 +6,7 @@
 
 // SYSTEM INCLUDES
 #include <stdint.h>
+#include <deque>
 
 namespace DnsFwd
 {
@@ -33,6 +34,8 @@ namespace DnsFwd
         uint32_t m_UpstreamIp = 0;
 
         DnsFwd::Udp::Server m_Server;
+        // Queue is selected so that older entries may be deleted easily
+        std::deque<uint16_t> m_TxQ;
     };
 }  // namespace DnsFwd
 

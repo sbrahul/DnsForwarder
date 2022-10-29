@@ -1,15 +1,13 @@
 // LOCAL INCLUDES
 #include "ServerApp.h"
+#include "DnsPacket.h"
+#include "Udp.h"
 
 // SYSTEM INCLUDES
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
-
-namespace
-{
-    uint8_t _recvBuffer[1500];
-}
 
 bool DnsFwd::ServerApp::m_Terminate = false;
 
@@ -38,16 +36,37 @@ void DnsFwd::ServerApp::Run(uint32_t ip, uint16_t port)
         return;
     }
 
-    struct sockaddr_in6 saddr = {0};
-    auto bytes = m_Server.Recv(_recvBuffer, sizeof _recvBuffer, &saddr);
-    
-    // Check if terminated
-    if (m_Terminate)
+    while (1)
     {
-        std::cout << "Closing server\n";
-        return;
-    }
+        DnsPacket pkt = m_Server.Recv();
 
-    pause();
+        // Check if terminated
+        if (m_Terminate)
+        {
+            std::cout << "Closing server\n";
+            break;
+        }
+
+        if (pkt.IsEmpty())
+        {
+            // Either timeout or some interrupt
+            continue;
+        }
+
+        auto tx_id = pkt.GetTxId();
+        if (std::find(m_TxQ.begin(), m_TxQ.end(), tx_id) != m_TxQ.end())
+        {
+            std::cout << "Duplicate request. Dropping\n";
+            continue;
+        }
+        // Add to Q
+        m_TxQ.push_back(tx_id);
+
+        // Forward upstream and get back response
+        auto resp_pkt = Udp::SendAndReceive(pkt, ip, port);
+
+        m_Server.SendTo(resp_pkt, pkt.GetSaddr6());
+    }
+    std::cout << "Finished run\n";
 }
 
