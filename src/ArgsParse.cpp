@@ -9,11 +9,11 @@
 
 namespace DnsFwd::ArgsParse
 {
-    std::tuple<uint32_t, uint16_t> Parse(int argc, char** argv)
+    std::tuple<uint32_t, uint16_t> Parse(int a_Argc, char** a_Argv)
     {
         auto bad_ret = std::make_tuple(0, 0);
         // We need exactly 2 args
-        if (argc != 3)
+        if (a_Argc != 3)
         {
             std::cerr << "Wrong number of args!\n";
             return bad_ret;
@@ -21,14 +21,14 @@ namespace DnsFwd::ArgsParse
 
         uint32_t ip = 0;
         // extract IP
-        if (!DnsFwd::Utils::Ipv4ToNetwork(argv[1], &ip))
+        if (!DnsFwd::Utils::Ipv4ToNetwork(a_Argv[1], &ip))
         {
             std::cerr << "ArgsParse::Parse - Bad IP value\n";
             return bad_ret;
         }
 
         // extract the port number and check for valid values
-        unsigned long port = strtoul(argv[2], NULL, 10);
+        unsigned long port = strtoul(a_Argv[2], NULL, 10);
         std::cout << "Port: " << port << "\n";
         if (!port || (port > 65535))
         {
@@ -40,4 +40,3 @@ namespace DnsFwd::ArgsParse
         return std::make_tuple(ip, port_16);
     }
 }  // namespace DnsFwd::ArgsParse
-

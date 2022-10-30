@@ -3,7 +3,7 @@
 
 namespace DnsFwd::SignalHnd
 {
-    bool Register(int sig, void (*fn)(int));
+    bool Register(int a_Sig, void (*a_Fn)(int));
 }
 
-#endif // _SIGNAL_HND_H_
+#endif  // _SIGNAL_HND_H_

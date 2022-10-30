@@ -5,8 +5,8 @@
 #include "Udp.h"
 
 // SYSTEM INCLUDES
-#include <stdint.h>
 #include <deque>
+#include <stdint.h>
 
 namespace DnsFwd
 {
@@ -15,14 +15,14 @@ namespace DnsFwd
       public:
         // Lifecycle
         ServerApp() = delete;
-        ServerApp(const char* ip, uint16_t port);
+        ServerApp(const char* a_Ip, uint16_t a_Port);
         ~ServerApp();
 
         // Statics
-        static void Terminate(int signal);
+        static void Terminate(int a_Signal);
 
         // Members
-        void Run(uint32_t ip, uint16_t port);
+        void Run(uint32_t a_Ip, uint16_t a_Port);
 
       private:
         // Methods
@@ -30,13 +30,10 @@ namespace DnsFwd
         // Attributes
         static bool m_Terminate;
 
-        uint16_t m_UpstreamPort = 0;
-        uint32_t m_UpstreamIp = 0;
-
         DnsFwd::Udp::Server m_Server;
         // Queue is selected so that older entries may be deleted easily
         std::deque<uint16_t> m_TxQ;
     };
 }  // namespace DnsFwd
 
-#endif // _SERVER_APP_H_
+#endif  // _SERVER_APP_H_

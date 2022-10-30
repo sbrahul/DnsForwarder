@@ -29,11 +29,11 @@ DnsFwd::Udp::Server::~Server()
 bool
 DnsFwd::Udp::Server::CreateAndBind()
 {
-//    uint32_t ip = 0;
-//    if (!DnsFwd::Utils::Ipv4ToNetwork(m_ListenIp, &ip))
-//    {
-//        return false;
-//    }
+    //    uint32_t ip = 0;
+    //    if (!DnsFwd::Utils::Ipv4ToNetwork(m_ListenIp, &ip))
+    //    {
+    //        return false;
+    //    }
 
     struct in6_addr ip6 = {0};
     if (!DnsFwd::Utils::Ipv6ToNetwork(m_ListenIp, &ip6))
@@ -66,17 +66,18 @@ DnsFwd::Udp::Server::CreateAndBind()
         return false;
     }
 
-	return true;
+    return true;
 }
 
-DnsFwd::Packet DnsFwd::Udp::Server::Recv()
+DnsFwd::Packet
+DnsFwd::Udp::Server::Recv()
 {
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(m_ServFd, &fds);
     // select can modify timeout val. So, take a copy.
     struct timeval tout = m_Timeout;
-    int s_ret = select(m_ServFd+1, &fds, NULL, NULL, &tout);
+    int s_ret = select(m_ServFd + 1, &fds, NULL, NULL, &tout);
     if (-1 == s_ret)
     {
         perror("Select call fail");
@@ -118,7 +119,9 @@ DnsFwd::Udp::Server::SendTo(const DnsFwd::Packet& a_Pkt,
     }
 }
 
-DnsFwd::Packet DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip, uint16_t a_Port)
+DnsFwd::Packet
+DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
+                            uint16_t a_Port)
 {
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (-1 == fd)
@@ -133,7 +136,8 @@ DnsFwd::Packet DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t
     saddr.sin_addr.s_addr = a_Ip;
     saddr.sin_port = htons(a_Port);
 
-    if (-1 == sendto(fd, a_Pkt.Get(), a_Pkt.Size(), 0, (struct sockaddr *)&saddr, sizeof saddr))
+    if (-1 == sendto(fd, a_Pkt.Get(), a_Pkt.Size(), 0,
+                     (struct sockaddr*) &saddr, sizeof saddr))
     {
         perror("sending upstream failed");
         return Packet();
@@ -146,7 +150,7 @@ DnsFwd::Packet DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t
     FD_SET(fd, &fds);
     // Have a 5 second timeout
     struct timeval tout = {5, 0};
-    int s_ret = select(fd+1, &fds, NULL, NULL, &tout);
+    int s_ret = select(fd + 1, &fds, NULL, NULL, &tout);
     if (-1 == s_ret)
     {
         perror("Select call fail");

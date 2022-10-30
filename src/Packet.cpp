@@ -35,4 +35,3 @@ DnsFwd::Packet::Packet(Packet&& a_Pkt)
     // v6 saddr is bigger. so swapping that should be enough
     std::swap(m_Saddr6, a_Pkt.m_Saddr6);
 }
-

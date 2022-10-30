@@ -15,6 +15,6 @@ namespace DnsFwd
 
         uint16_t GetTxId() const;
     };
-}
+}  // namespace DnsFwd
 
-#endif // _UDP_PACKET_H_
+#endif  // _UDP_PACKET_H_

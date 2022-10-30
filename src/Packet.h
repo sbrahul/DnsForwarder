@@ -2,9 +2,9 @@
 #define _PACKET_H_
 
 // SYSTEM INCLUDES
-#include <stdint.h>
-#include <netinet/in.h>
 #include <memory>
+#include <netinet/in.h>
+#include <stdint.h>
 
 namespace DnsFwd
 {
@@ -12,7 +12,7 @@ namespace DnsFwd
     {
       public:
         // LIFECYCLE
-        Packet() {};
+        Packet() = default;
         Packet(uint8_t* a_Buffer, uint32_t a_Size,
                const struct sockaddr_in& a_Saddr);
         Packet(uint8_t* a_Buffer, uint32_t a_Size,
@@ -56,6 +56,5 @@ namespace DnsFwd
             struct sockaddr_in6 m_Saddr6;
         };
     };
-}
-#endif // _UDP_PACKET_H_
-
+}  // namespace DnsFwd
+#endif  // _UDP_PACKET_H_

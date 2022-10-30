@@ -9,24 +9,24 @@
 
 namespace
 {
-    void Usage_a(const char* progName)
+    void Usage_a(const char* a_ProgName)
     {
-        std::cout << progName << " <Upstream IP> <port>\n";
+        std::cout << a_ProgName << " <Upstream IP> <port>\n";
     }
 
-    //const char* LISTEN_IP = "127.0.0.1";
+    // const char* LISTEN_IP = "127.0.0.1";
     const char* LISTEN_IP = "::1";
     const uint16_t LISTEN_PORT = 9000;
 }  // namespace
 
-
-int main(int argc, char* argv[])
+int
+main(int a_Argc, char* a_Argv[])
 {
-    auto [ip, port] = DnsFwd::ArgsParse::Parse(argc, argv);
+    auto [ip, port] = DnsFwd::ArgsParse::Parse(a_Argc, a_Argv);
 
     if (!ip || !port)
     {
-        Usage_a(argv[0]);
+        Usage_a(a_Argv[0]);
         exit(1);
     }
 
@@ -37,4 +37,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

@@ -2,18 +2,19 @@
 #include "Utils.h"
 
 // SYSTEM INCLUDES
-#include <iostream>
 #include <arpa/inet.h>
+#include <iostream>
 
-bool DnsFwd::Utils::Ipv4ToNetwork(const char *ip, uint32_t* ipNetwork)
+bool
+DnsFwd::Utils::Ipv4ToNetwork(const char* a_Ip, uint32_t* a_IpNetwork)
 {
-    if (nullptr == ip)
+    if (nullptr == a_Ip)
     {
         return false;
     }
 
     // extract IP
-    if (inet_pton(AF_INET, ip, ipNetwork) != 1)
+    if (inet_pton(AF_INET, a_Ip, a_IpNetwork) != 1)
     {
         perror("Ip conversion failed");
         return false;
@@ -22,15 +23,16 @@ bool DnsFwd::Utils::Ipv4ToNetwork(const char *ip, uint32_t* ipNetwork)
     return true;
 }
 
-bool DnsFwd::Utils::Ipv6ToNetwork(const char *ip, struct in6_addr* ipNetwork)
+bool
+DnsFwd::Utils::Ipv6ToNetwork(const char* a_Ip, struct in6_addr* a_IpNetwork)
 {
-    if (nullptr == ip)
+    if (nullptr == a_Ip)
     {
         return false;
     }
 
     // extract IP
-    if (inet_pton(AF_INET6, ip, ipNetwork) != 1)
+    if (inet_pton(AF_INET6, a_Ip, a_IpNetwork) != 1)
     {
         perror("Ip6 conversion failed");
         return false;

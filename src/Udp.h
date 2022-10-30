@@ -5,14 +5,14 @@
 #include "Packet.h"
 
 // SYSTEM INCLUDES
-#include <stdint.h>
 #include <netinet/in.h>
+#include <stdint.h>
 
 namespace DnsFwd::Udp
 {
     DnsFwd::Packet SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
                                   uint16_t a_Port);
-    
+
     // Udp Server to send and receive packets
     class Server
     {
@@ -53,7 +53,6 @@ namespace DnsFwd::Udp
         // Large buffers shouldnt be on stack.
         std::unique_ptr<uint8_t[]> m_RecvBuffer;
     };
-}
+}  // namespace DnsFwd::Udp
 
-
-#endif // _UDP_H_
+#endif  // _UDP_H_
