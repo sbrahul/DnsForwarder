@@ -2,6 +2,7 @@
 #define _UTILS_H_
 
 // SYSTEM INCLUDES
+#include <cstring>
 #include <stdint.h>
 
 // Forward Declarations
@@ -11,6 +12,19 @@ namespace DnsFwd::Utils
 {
     bool Ipv4ToNetwork(const char* a_Ip, uint32_t* a_IpNetwork);
     bool Ipv6ToNetwork(const char* a_Ip, struct in6_addr* a_IpNetwork);
+
+#define PRINTER(stuff...)                                   \
+{                                                           \
+    std::cout << "[" << __FILE__ << ":" << __func__ << "]\t"\
+              << stuff;                                     \
+}
+
+#define PRINTER_ERNO(stuff...)                              \
+{                                                           \
+    std::cerr << "[" << __FILE__ << ":" << __func__ << "]\t"\
+              << stuff << ": " << strerror(errno) << "\n";  \
+}
+
 
     // Helper to deallocate resources for c functions like socket
     template<typename T, typename Q>

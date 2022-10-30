@@ -1,9 +1,10 @@
 // LOCAL INCLUDES
 #include "SignalHnd.h"
+#include "Utils.h"
 
 // SYSTEM INCLUDES
+#include <iostream>
 #include <signal.h>
-#include <stdio.h>
 
 namespace DnsFwd::SignalHnd
 {
@@ -15,7 +16,7 @@ namespace DnsFwd::SignalHnd
         int rc = sigaction(a_Sig, &sa, NULL) != 0;
         if (rc)
         {
-            perror("Failed to register signal");
+            PRINTER_ERNO("Failed to register signal " << a_Sig);
         }
 
         // sigaction returns 0 on success and this function should return true

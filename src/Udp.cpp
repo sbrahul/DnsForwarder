@@ -44,7 +44,7 @@ DnsFwd::Udp::Server::CreateAndBind()
     m_ServFd = socket(AF_INET6, SOCK_DGRAM, 0);
     if (-1 == m_ServFd)
     {
-        perror("Failed to create server socket");
+        PRINTER_ERNO("Failed to create server socket");
         return false;
     }
 
@@ -62,7 +62,7 @@ DnsFwd::Udp::Server::CreateAndBind()
 
     if (0 != bind(m_ServFd, (struct sockaddr*) &saddr, sizeof saddr))
     {
-        perror("Bind failed for server port");
+        PRINTER_ERNO("Bind failed for server port");
         return false;
     }
 
@@ -80,7 +80,7 @@ DnsFwd::Udp::Server::Recv()
     int s_ret = select(m_ServFd + 1, &fds, NULL, NULL, &tout);
     if (-1 == s_ret)
     {
-        perror("Select call fail");
+        PRINTER_ERNO("Select call fail");
         return Packet();
     }
     else if (0 == s_ret)
@@ -96,7 +96,7 @@ DnsFwd::Udp::Server::Recv()
                          (struct sockaddr*) &saddr, &saddr_size);
     if (bytes < 1)
     {
-        perror("Failed to receive data");
+        PRINTER_ERNO("Failed to receive data");
         return Packet();
     }
     else if (0 == bytes)
@@ -115,7 +115,7 @@ DnsFwd::Udp::Server::SendTo(const DnsFwd::Packet& a_Pkt,
     if (-1 == sendto(m_ServFd, a_Pkt.Get(), a_Pkt.Size(), 0,
                      (struct sockaddr*) &a_Saddr, sizeof a_Saddr))
     {
-        perror("sending packet failed");
+        PRINTER_ERNO("sending packet failed");
     }
 }
 
@@ -126,7 +126,7 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (-1 == fd)
     {
-        perror("Failed to create send socket");
+        PRINTER_ERNO("Failed to create send socket");
         return Packet();
     }
     DnsFwd::Utils::AutoDealloc<int, decltype(&close)> fd_ad(fd, &close);
@@ -139,7 +139,7 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
     if (-1 == sendto(fd, a_Pkt.Get(), a_Pkt.Size(), 0,
                      (struct sockaddr*) &saddr, sizeof saddr))
     {
-        perror("sending upstream failed");
+        PRINTER_ERNO("sending upstream failed");
         return Packet();
     }
 
@@ -153,7 +153,7 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
     int s_ret = select(fd + 1, &fds, NULL, NULL, &tout);
     if (-1 == s_ret)
     {
-        perror("Select call fail");
+        PRINTER_ERNO("Select call fail");
         return Packet();
     }
     else if (0 == s_ret)
@@ -167,7 +167,7 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
                          (struct sockaddr*) &saddr, &saddr_size);
     if (bytes < 1)
     {
-        perror("Failed to receive data");
+        PRINTER_ERNO("Failed to receive data");
         return Packet();
     }
     else if (0 == bytes)

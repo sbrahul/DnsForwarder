@@ -2,6 +2,7 @@
 #include "ArgsParse.h"
 #include "ServerApp.h"
 #include "SignalHnd.h"
+#include "Utils.h"
 
 // SYSTEM INCLUDES
 #include <iostream>
@@ -11,7 +12,7 @@ namespace
 {
     void Usage_a(const char* a_ProgName)
     {
-        std::cout << a_ProgName << " <Upstream IP> <port>\n";
+        PRINTER(a_ProgName << " <Upstream IP> <port>\n");
     }
 
     // const char* LISTEN_IP = "127.0.0.1";

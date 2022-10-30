@@ -2,6 +2,7 @@
 #include "ServerApp.h"
 #include "DnsPacket.h"
 #include "Udp.h"
+#include "Utils.h"
 
 // SYSTEM INCLUDES
 #include <algorithm>
@@ -23,7 +24,7 @@ DnsFwd::ServerApp::~ServerApp()
 void
 DnsFwd::ServerApp::Terminate(int a_Signal)
 {
-    std::cout << "Received signal " << a_Signal << "\n";
+    PRINTER("Received signal " << a_Signal << "\n");
     m_Terminate = true;
 }
 
@@ -42,7 +43,7 @@ DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
         // Check if terminated
         if (m_Terminate)
         {
-            std::cout << "Closing server\n";
+            PRINTER("Closing server\n");
             break;
         }
 
@@ -55,7 +56,7 @@ DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
         auto tx_id = pkt.GetTxId();
         if (std::find(m_TxQ.begin(), m_TxQ.end(), tx_id) != m_TxQ.end())
         {
-            std::cout << "Duplicate request. Dropping\n";
+            PRINTER("Duplicate request. Dropping\n");
             continue;
         }
         // Add to Q
@@ -66,5 +67,5 @@ DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
 
         m_Server.SendTo(resp_pkt, pkt.GetSaddr6());
     }
-    std::cout << "Finished run\n";
+    PRINTER("Finished run\n");
 }
