@@ -156,6 +156,11 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
         perror("Select call fail");
         return Packet();
     }
+    else if (0 == s_ret)
+    {
+        // either timed out or interrupt
+        return Packet();
+    }
     std::unique_ptr<uint8_t[]> recv_buf(new uint8_t[Server::MAX_BUF_SIZE]);
     socklen_t saddr_size = sizeof saddr;
     int bytes = recvfrom(fd, recv_buf.get(), Server::MAX_BUF_SIZE, 0,
