@@ -5,8 +5,10 @@
 #include "Packet.h"
 
 // SYSTEM INCLUDES
+#include <functional>
 #include <netinet/in.h>
 #include <stdint.h>
+#include <string>
 
 namespace DnsFwd::Udp
 {
@@ -25,7 +27,8 @@ namespace DnsFwd::Udp
 
       public:
         // Lifecycle
-        Server(const char* a_Ip, uint16_t a_Port);
+        Server(const std::string& a_Ip4, const std::string& a_Ip6,
+               uint16_t a_Port);
         ~Server();
 
         // Members
@@ -36,17 +39,27 @@ namespace DnsFwd::Udp
             m_Timeout.tv_sec = a_Sec;
         }
 
-        Packet Recv();
+        void Recv(std::function<void(DnsFwd::Packet)> a_Inserter);
 
-        void SendTo(const DnsFwd::Packet& a_Pkt, struct sockaddr_in6 a_Saddr);
+        void SendTo(const DnsFwd::Packet& a_Pkt,
+                    struct sockaddr_storage a_Saddr);
+
+        inline void Terminate()
+        {
+            m_Terminate = true;
+        }
 
         static constexpr uint32_t MAX_BUF_SIZE = 1500;
 
       private:
-        int m_ServFd = -1;
+        bool m_Terminate = false;
+
+        int m_ServFd4 = -1;
+        int m_ServFd6 = -1;
 
         uint16_t m_ListenPort = 0;
-        const char* m_ListenIp = nullptr;
+        std::string m_ListenIp4;
+        std::string m_ListenIp6;
 
         struct timeval m_Timeout = {0};
 

@@ -1,7 +1,7 @@
 TARGET = DnsFwder
 CXX ?= g++
 #CFLAGS ?= -fsanitize=address
-COMPFLAGS = -g -O0 -fPIC -std=c++17 -Wall
+COMPFLAGS = -g -O0 -fPIC -std=c++17 -Wall -pthread
 SRCDIR = src
 OBJDIR = obj
 

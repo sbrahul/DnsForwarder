@@ -1,19 +1,26 @@
 // LOCAL INCLUDES
 #include "ServerApp.h"
-#include "DnsPacket.h"
-#include "Udp.h"
 #include "Utils.h"
 
 // SYSTEM INCLUDES
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <iostream>
+#include <thread>
 #include <unistd.h>
+
+namespace
+{
+    constexpr uint8_t  MAX_THREADS = 10;
+    constexpr uint32_t MAX_TXID_SIZE = 1000;
+}  // namespace
 
 bool DnsFwd::ServerApp::m_Terminate = false;
 
-DnsFwd::ServerApp::ServerApp(const char* a_Ip, uint16_t a_Port)
-    : m_Server(a_Ip, a_Port)
+DnsFwd::ServerApp::ServerApp(const std::string& a_Ip4, const std::string& a_Ip6,
+                             uint16_t a_Port)
+    : m_Server(a_Ip4, a_Ip6, a_Port)
 {
 }
 
@@ -29,43 +36,96 @@ DnsFwd::ServerApp::Terminate(int a_Signal)
 }
 
 void
+DnsFwd::ServerApp::InsertToQ(DnsPacket&& a_Pkt)
+{
+    std::unique_lock lk(m_QMut);
+    m_PktQ.emplace(std::move(a_Pkt));
+    // Signal worker thread to process Q
+    m_QCond.notify_one();
+}
+
+void
+DnsFwd::ServerApp::Worker()
+{
+    while (!m_Terminate)
+    {
+        std::unique_lock lk(m_QMut);
+        m_QCond.wait(lk);
+        if (m_Terminate)
+        {
+            break;
+        }
+
+        // Process Q
+        if (!m_PktQ.empty())
+        {
+            // Q not empty
+            DnsPacket pkt = std::move(m_PktQ.front());
+            auto tx_id = pkt.GetTxId();
+            // Find in reverse since its more likely that the duplicate request
+            // was recently processed
+            if (std::find(m_TxQ.rbegin(), m_TxQ.rend(), tx_id) != m_TxQ.rend())
+            {
+                PRINTER("Duplicate request. Dropping\n");
+                m_PktQ.pop();
+                continue;
+            }
+            // Add to Transaction ID queue
+            m_TxQ.push_back(tx_id);
+            // Cleanup old entries (Least recently used)
+            // Can also make this into a separate thread to cleanup based on a
+            // time condition.
+            if (m_TxQ.size() == MAX_TXID_SIZE)
+            {
+                m_TxQ.pop_front();
+            }
+
+            // Forward upstream and get back response
+            auto resp_pkt =
+                Udp::SendAndReceive(pkt, m_UpstreamIp, m_UpstreamPort);
+            m_Server.SendTo(resp_pkt, pkt.GetSaddr());
+            m_PktQ.pop();
+        }
+    }
+}
+
+void
 DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
 {
+    // Create listen socket and bind to port
     if (!m_Server.CreateAndBind())
     {
         return;
     }
 
-    while (1)
+    m_UpstreamIp = a_Ip;
+    m_UpstreamPort = a_Port;
+
+    // Start the receiver function as a separate thread
+    // Recv() function adds incoming packets to a queue to be processed
+    std::thread recv_t(&DnsFwd::Udp::Server::Recv, &m_Server,
+                       [this](Packet&& pkt) { InsertToQ(std::move(pkt)); });
+
+    // Worker thread pool to process requests
+    std::thread worker_t[MAX_THREADS];
+
+    for (int i = 0; i < MAX_THREADS; ++i)
     {
-        DnsPacket pkt = m_Server.Recv();
+        worker_t[i] = std::thread(&DnsFwd::ServerApp::Worker, this);
+    }
 
-        // Check if terminated
-        if (m_Terminate)
-        {
-            PRINTER("Closing server\n");
-            break;
-        }
+    // Check every second if it is terminated so that we can signal the workers
+    while (!m_Terminate)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    m_Server.Terminate();
+    m_QCond.notify_all();
 
-        if (pkt.IsEmpty())
-        {
-            // Either timeout or some interrupt
-            continue;
-        }
-
-        auto tx_id = pkt.GetTxId();
-        if (std::find(m_TxQ.begin(), m_TxQ.end(), tx_id) != m_TxQ.end())
-        {
-            PRINTER("Duplicate request. Dropping\n");
-            continue;
-        }
-        // Add to Q
-        m_TxQ.push_back(tx_id);
-
-        // Forward upstream and get back response
-        auto resp_pkt = Udp::SendAndReceive(pkt, a_Ip, a_Port);
-
-        m_Server.SendTo(resp_pkt, pkt.GetSaddr6());
+    recv_t.join();
+    for (int i = 0; i < MAX_THREADS; ++i)
+    {
+        worker_t[i].join();
     }
     PRINTER("Finished run\n");
 }

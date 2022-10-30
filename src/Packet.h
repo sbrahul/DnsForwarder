@@ -14,12 +14,13 @@ namespace DnsFwd
         // LIFECYCLE
         Packet() = default;
         Packet(uint8_t* a_Buffer, uint32_t a_Size,
-               const struct sockaddr_in& a_Saddr);
-        Packet(uint8_t* a_Buffer, uint32_t a_Size,
-               const struct sockaddr_in6& a_Saddr);
+               const struct sockaddr_storage& a_Saddr);
         virtual ~Packet();
 
+        Packet(const Packet&) = default;
+        Packet& operator=(const Packet&) = default;
         Packet(Packet&& a_Pkt);
+        void operator=(Packet&& a_Pkt);
 
         inline uint8_t* Get()
         {
@@ -42,19 +43,20 @@ namespace DnsFwd
             return (0 == m_Size);
         }
 
-        inline struct sockaddr_in6 GetSaddr6() const
+        inline struct sockaddr_storage GetSaddr() const
         {
-            return m_Saddr6;
+            return m_Saddr;
+        }
+
+        inline sa_family_t GetFamily() const
+        {
+            return m_Saddr.ss_family;
         }
 
       protected:
         uint32_t m_Size = 0;
         std::shared_ptr<uint8_t[]> m_Buffer;
-        union
-        {
-            struct sockaddr_in m_Saddr4;
-            struct sockaddr_in6 m_Saddr6;
-        };
+        struct sockaddr_storage m_Saddr;
     };
 }  // namespace DnsFwd
 #endif  // _UDP_PACKET_H_
