@@ -12,7 +12,7 @@
 
 namespace
 {
-    constexpr uint8_t  MAX_THREADS = 10;
+    constexpr uint8_t MAX_THREADS = 10;
     constexpr uint32_t MAX_TXID_SIZE = 1000;
 }  // namespace
 
@@ -61,13 +61,13 @@ DnsFwd::ServerApp::Worker()
         {
             // Q not empty
             DnsPacket pkt = std::move(m_PktQ.front());
+            m_PktQ.pop();
             auto tx_id = pkt.GetTxId();
             // Find in reverse since its more likely that the duplicate request
             // was recently processed
             if (std::find(m_TxQ.rbegin(), m_TxQ.rend(), tx_id) != m_TxQ.rend())
             {
-                PRINTER("Duplicate request. Dropping\n");
-                m_PktQ.pop();
+                PRINTER("Duplicate request. Dropping: " << tx_id << "\n");
                 continue;
             }
             // Add to Transaction ID queue
@@ -80,11 +80,16 @@ DnsFwd::ServerApp::Worker()
                 m_TxQ.pop_front();
             }
 
+            // Sending and receiving can now work in parallel. Releasing lock
+            lk.unlock();
+
             // Forward upstream and get back response
             auto resp_pkt =
                 Udp::SendAndReceive(pkt, m_UpstreamIp, m_UpstreamPort);
-            m_Server.SendTo(resp_pkt, pkt.GetSaddr());
-            m_PktQ.pop();
+            if (!resp_pkt.IsEmpty())
+            {
+                m_Server.SendTo(resp_pkt, pkt.GetSaddr());
+            }
         }
     }
 }
