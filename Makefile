@@ -18,7 +18,7 @@ dir:
 	@mkdir -p $(OBJDIR)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) $(MYLDFLAGS) $(COMPFLAGS) $^ -o $@
+	$(CXX) $(CFLAGS) $(LDFLAGS) $(MYLDFLAGS) $(COMPFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HDRS)
 	$(CXX) $(CFLAGS) $(COMPFLAGS) -c $< -o $@

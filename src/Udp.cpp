@@ -15,8 +15,7 @@ DnsFwd::Udp::Server::Server(const std::string& a_Ip4, const std::string& a_Ip6,
                             uint16_t a_Port)
     : m_ListenPort(a_Port),
       m_ListenIp4(a_Ip4),
-      m_ListenIp6(a_Ip6),
-      m_RecvBuffer(new uint8_t[MAX_BUF_SIZE])
+      m_ListenIp6(a_Ip6)
 {
 }
 
@@ -112,6 +111,8 @@ DnsFwd::Udp::Server::CreateAndBind()
 void
 DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
 {
+    // Large buffers shouldnt be on stack.
+    std::unique_ptr<uint8_t[]> recv_buf(new uint8_t[MAX_BUF_SIZE]);
     while (!m_Terminate)
     {
         fd_set fds;
@@ -145,10 +146,10 @@ DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
         memset(&saddr, 0, sizeof saddr);
         if (FD_ISSET(m_ServFd4, &fds))
         {
-            memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
+            memset(recv_buf.get(), 0, MAX_BUF_SIZE);
             // not performing sanity checks on args
             socklen_t saddr_size = sizeof(struct sockaddr_in);
-            int bytes = recvfrom(m_ServFd4, m_RecvBuffer.get(), MAX_BUF_SIZE, 0,
+            int bytes = recvfrom(m_ServFd4, recv_buf.get(), MAX_BUF_SIZE, 0,
                                  (struct sockaddr*) &saddr, &saddr_size);
             if (bytes < 1)
             {
@@ -161,14 +162,14 @@ DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
             }
 
             // Valid data
-            a_Inserter(Packet(m_RecvBuffer.get(), bytes, saddr));
+            a_Inserter(Packet(recv_buf.get(), bytes, saddr));
         }
         if (FD_ISSET(m_ServFd6, &fds))
         {
-            memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
+            memset(recv_buf.get(), 0, MAX_BUF_SIZE);
             // not performing sanity checks on args
             socklen_t saddr_size = sizeof(struct sockaddr_in6);
-            int bytes = recvfrom(m_ServFd6, m_RecvBuffer.get(), MAX_BUF_SIZE, 0,
+            int bytes = recvfrom(m_ServFd6, recv_buf.get(), MAX_BUF_SIZE, 0,
                                  (struct sockaddr*) &saddr, &saddr_size);
             if (bytes < 1)
             {
@@ -181,7 +182,7 @@ DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
             }
 
             // Valid data
-            a_Inserter(Packet(m_RecvBuffer.get(), bytes, saddr));
+            a_Inserter(Packet(recv_buf.get(), bytes, saddr));
         }
     }
 }

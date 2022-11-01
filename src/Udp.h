@@ -62,9 +62,6 @@ namespace DnsFwd::Udp
         std::string m_ListenIp6;
 
         struct timeval m_Timeout = {0};
-
-        // Large buffers shouldnt be on stack.
-        std::unique_ptr<uint8_t[]> m_RecvBuffer;
     };
 }  // namespace DnsFwd::Udp
 
