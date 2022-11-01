@@ -15,7 +15,7 @@ namespace DnsFwd::ArgsParse
         // We need exactly 2 args
         if (a_Argc != 3)
         {
-            PRINTER("Wrong number of args!\n");
+            std::cout << "Wrong number of args!\n";
             return bad_ret;
         }
 
@@ -39,3 +39,4 @@ namespace DnsFwd::ArgsParse
         return std::make_tuple(ip, port_16);
     }
 }  // namespace DnsFwd::ArgsParse
+

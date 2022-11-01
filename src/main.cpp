@@ -12,7 +12,7 @@ namespace
 {
     void _Usage(const char* a_ProgName)
     {
-        PRINTER(a_ProgName << " <Upstream IP> <port>\n");
+        std::cout << a_ProgName << " <Upstream IPv4> <port>\n";
     }
 
     const std::string LISTEN_IP4("127.0.0.1");
