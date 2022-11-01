@@ -7,3 +7,4 @@ namespace DnsFwd::SignalHnd
 }
 
 #endif  // _SIGNAL_HND_H_
+

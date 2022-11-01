@@ -44,6 +44,7 @@ DnsFwd::Udp::Server::CreateAndBind()
 
     if (!m_ListenIp4.empty())
     {
+        // Convert to network format
         uint32_t ip4 = 0;
         if (!DnsFwd::Utils::Ipv4ToNetwork(m_ListenIp4, &ip4))
         {
@@ -72,6 +73,7 @@ DnsFwd::Udp::Server::CreateAndBind()
 
     if (!m_ListenIp6.empty())
     {
+        // Convert to network format
         struct in6_addr ip6 = {0};
         if (!DnsFwd::Utils::Ipv6ToNetwork(m_ListenIp6, &ip6))
         {
@@ -122,26 +124,28 @@ DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
         {
             FD_SET(m_ServFd6, &fds);
         }
+
         int max_fd = std::max(m_ServFd4, m_ServFd6) + 1;
         // select can modify timeout val. So, take a copy.
         struct timeval tout = m_Timeout;
         int s_ret = select(max_fd, &fds, NULL, NULL, &tout);
         if (-1 == s_ret)
         {
-            PRINTER_ERNO("Select call fail");
+            PRINTER_ERNO("Select call fail!");
             return;
         }
         else if (0 == s_ret)
         {
-            // either timed out or interrupt
+            // Timedout
             continue;
         }
 
+        // At least one socket ready
         struct sockaddr_storage saddr;
         memset(&saddr, 0, sizeof saddr);
-        memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
         if (FD_ISSET(m_ServFd4, &fds))
         {
+            memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
             // not performing sanity checks on args
             socklen_t saddr_size = sizeof(struct sockaddr_in);
             int bytes = recvfrom(m_ServFd4, m_RecvBuffer.get(), MAX_BUF_SIZE, 0,
@@ -161,6 +165,7 @@ DnsFwd::Udp::Server::Recv(std::function<void(DnsFwd::Packet)> a_Inserter)
         }
         if (FD_ISSET(m_ServFd6, &fds))
         {
+            memset(m_RecvBuffer.get(), 0, MAX_BUF_SIZE);
             // not performing sanity checks on args
             socklen_t saddr_size = sizeof(struct sockaddr_in6);
             int bytes = recvfrom(m_ServFd6, m_RecvBuffer.get(), MAX_BUF_SIZE, 0,
@@ -207,10 +212,14 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
         PRINTER_ERNO("Failed to create send socket");
         return Packet();
     }
+    // Setup RAII for fd.
     DnsFwd::Utils::AutoDealloc<int, decltype(&close)> fd_ad(fd, &close);
 
+    // Received response will be packaged into Packet() which requires
+    // sockaddr_storage.
     struct sockaddr_storage s_saddr;
     memset(&s_saddr, 0, sizeof s_saddr);
+
     struct sockaddr_in* saddr = (struct sockaddr_in*) &s_saddr;
     saddr->sin_family = AF_INET;
     saddr->sin_addr.s_addr = a_Ip;
@@ -258,3 +267,4 @@ DnsFwd::Udp::SendAndReceive(const DnsFwd::Packet& a_Pkt, uint32_t a_Ip,
     // Valid data
     return Packet(recv_buf.get(), bytes, s_saddr);
 }
+

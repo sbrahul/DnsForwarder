@@ -19,6 +19,7 @@ namespace DnsFwd
 
         Packet(const Packet&) = default;
         Packet& operator=(const Packet&) = default;
+
         Packet(Packet&& a_Pkt);
         void operator=(Packet&& a_Pkt);
 
@@ -39,7 +40,6 @@ namespace DnsFwd
 
         inline bool IsEmpty() const
         {
-            // convert to bool
             return (0 == m_Size);
         }
 
@@ -55,8 +55,11 @@ namespace DnsFwd
 
       protected:
         uint32_t m_Size = 0;
+        // shared_ptr is used so that the packet can be passed around easily
         std::shared_ptr<uint8_t[]> m_Buffer;
+        // Packet can be v4 or v6. So, use sockaddr_storage
         struct sockaddr_storage m_Saddr;
     };
 }  // namespace DnsFwd
 #endif  // _UDP_PACKET_H_
+

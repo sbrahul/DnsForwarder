@@ -22,7 +22,6 @@ DnsFwd::Packet::Packet(Packet&& a_Pkt)
 {
     std::swap(m_Buffer, a_Pkt.m_Buffer);
     std::swap(m_Size, a_Pkt.m_Size);
-    // v6 saddr is bigger. so swapping that should be enough
     std::swap(m_Saddr, a_Pkt.m_Saddr);
 }
 
@@ -34,6 +33,6 @@ DnsFwd::Packet::operator=(Packet&& a_Pkt)
     memset(&m_Saddr, 0, sizeof m_Saddr);
     std::swap(m_Buffer, a_Pkt.m_Buffer);
     std::swap(m_Size, a_Pkt.m_Size);
-    // v6 saddr is bigger. so swapping that should be enough
     std::swap(m_Saddr, a_Pkt.m_Saddr);
 }
+

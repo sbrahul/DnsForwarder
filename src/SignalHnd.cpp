@@ -19,7 +19,8 @@ namespace DnsFwd::SignalHnd
             PRINTER_ERNO("Failed to register signal " << a_Sig);
         }
 
-        // sigaction returns 0 on success and this function should return true
+        // sigaction returns 0 on success
         return (rc) ? false : true;
     }
 }  // namespace DnsFwd::SignalHnd
+

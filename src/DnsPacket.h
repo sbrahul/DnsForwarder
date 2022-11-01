@@ -13,6 +13,7 @@ namespace DnsFwd
         DnsPacket(Packet&& a_Pkt);
         virtual ~DnsPacket();
 
+        // Get the transcation ID of the DNS packet
         uint16_t GetTxId() const;
     };
 }  // namespace DnsFwd

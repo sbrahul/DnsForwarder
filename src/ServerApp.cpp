@@ -12,8 +12,8 @@
 
 namespace
 {
-    constexpr uint8_t MAX_THREADS = 10;
-    constexpr uint32_t MAX_TXID_SIZE = 1000;
+    constexpr uint8_t _MAX_THREADS = 10;
+    constexpr uint32_t _MAX_TXID_SIZE = 1000;
 }  // namespace
 
 bool DnsFwd::ServerApp::m_Terminate = false;
@@ -38,8 +38,10 @@ DnsFwd::ServerApp::Terminate(int a_Signal)
 void
 DnsFwd::ServerApp::InsertToQ(DnsPacket&& a_Pkt)
 {
-    std::unique_lock lk(m_QMut);
-    m_PktQ.emplace(std::move(a_Pkt));
+    {
+        std::unique_lock lk(m_QMut);
+        m_PktQ.emplace(std::move(a_Pkt));
+    }
     // Signal worker thread to process Q
     m_QCond.notify_one();
 }
@@ -75,7 +77,7 @@ DnsFwd::ServerApp::Worker()
             // Cleanup old entries (Least recently used)
             // Can also make this into a separate thread to cleanup based on a
             // time condition.
-            if (m_TxQ.size() == MAX_TXID_SIZE)
+            if (m_TxQ.size() == _MAX_TXID_SIZE)
             {
                 m_TxQ.pop_front();
             }
@@ -83,11 +85,12 @@ DnsFwd::ServerApp::Worker()
             // Sending and receiving can now work in parallel. Releasing lock
             lk.unlock();
 
-            // Forward upstream and get back response
+            // Forward packet upstream and get back response
             auto resp_pkt =
                 Udp::SendAndReceive(pkt, m_UpstreamIp, m_UpstreamPort);
             if (!resp_pkt.IsEmpty())
             {
+                // Send response back to originator
                 m_Server.SendTo(resp_pkt, pkt.GetSaddr());
             }
         }
@@ -112,9 +115,8 @@ DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
                        [this](Packet&& pkt) { InsertToQ(std::move(pkt)); });
 
     // Worker thread pool to process requests
-    std::thread worker_t[MAX_THREADS];
-
-    for (int i = 0; i < MAX_THREADS; ++i)
+    std::thread worker_t[_MAX_THREADS];
+    for (int i = 0; i < _MAX_THREADS; ++i)
     {
         worker_t[i] = std::thread(&DnsFwd::ServerApp::Worker, this);
     }
@@ -128,9 +130,10 @@ DnsFwd::ServerApp::Run(uint32_t a_Ip, uint16_t a_Port)
     m_QCond.notify_all();
 
     recv_t.join();
-    for (int i = 0; i < MAX_THREADS; ++i)
+    for (int i = 0; i < _MAX_THREADS; ++i)
     {
         worker_t[i].join();
     }
     PRINTER("Finished run\n");
 }
+

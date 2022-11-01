@@ -43,3 +43,4 @@ DnsFwd::Utils::Ipv6ToNetwork(const std::string& a_Ip,
 
     return true;
 }
+

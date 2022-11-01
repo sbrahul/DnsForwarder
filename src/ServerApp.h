@@ -22,6 +22,8 @@ namespace DnsFwd
         ServerApp(const std::string& a_Ip4, const std::string& a_Ip6,
                   uint16_t a_Port);
         ~ServerApp();
+        ServerApp(const ServerApp&) = delete;
+        ServerApp& operator=(const ServerApp&) = delete;
 
         // Statics
         static void Terminate(int a_Signal);
@@ -42,7 +44,8 @@ namespace DnsFwd
         uint32_t m_UpstreamIp = 0;
 
         DnsFwd::Udp::Server m_Server;
-        // Queue is selected so that older entries may be deleted easily
+        // deque is selected so that older entries may be deleted easily.
+        // queue doesnt support find().
         std::deque<uint16_t> m_TxQ;
         std::queue<Packet> m_PktQ;
 
@@ -52,3 +55,4 @@ namespace DnsFwd
 }  // namespace DnsFwd
 
 #endif  // _SERVER_APP_H_
+

@@ -10,7 +10,7 @@
 
 namespace
 {
-    void Usage_a(const char* a_ProgName)
+    void _Usage(const char* a_ProgName)
     {
         PRINTER(a_ProgName << " <Upstream IP> <port>\n");
     }
@@ -23,18 +23,22 @@ namespace
 int
 main(int a_Argc, char* a_Argv[])
 {
+    // Parse cmd line args
     auto [ip, port] = DnsFwd::ArgsParse::Parse(a_Argc, a_Argv);
 
     if (!ip || !port)
     {
-        Usage_a(a_Argv[0]);
+        _Usage(a_Argv[0]);
         exit(1);
     }
 
     // Register SIGINT for graceful termination on Ctrl+C
     DnsFwd::SignalHnd::Register(SIGINT, &DnsFwd::ServerApp::Terminate);
+
+    // Start the main server application
     DnsFwd::ServerApp s(LISTEN_IP4, LISTEN_IP6, LISTEN_PORT);
     s.Run(ip, port);
 
     return 0;
 }
+
