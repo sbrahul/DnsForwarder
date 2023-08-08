@@ -6,6 +6,7 @@
 #include "Udp.h"
 
 // SYSTEM INCLUDES
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <mutex>
@@ -38,7 +39,7 @@ namespace DnsFwd
         void Worker();
 
         // Attributes
-        static bool m_Terminate;
+        static std::atomic<bool> m_Terminate;
 
         uint16_t m_UpstreamPort = 0;
         uint32_t m_UpstreamIp = 0;

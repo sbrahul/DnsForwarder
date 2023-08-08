@@ -1,6 +1,7 @@
 #ifndef _ARGS_PARSE_H_
 #define _ARGS_PARSE_H_
 
+#include <cstdint>
 #include <tuple>
 
 namespace DnsFwd::ArgsParse

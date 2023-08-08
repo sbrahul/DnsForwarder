@@ -16,7 +16,7 @@ namespace
     constexpr uint32_t _MAX_TXID_SIZE = 1000;
 }  // namespace
 
-bool DnsFwd::ServerApp::m_Terminate = false;
+std::atomic<bool> DnsFwd::ServerApp::m_Terminate = false;
 
 DnsFwd::ServerApp::ServerApp(const std::string& a_Ip4, const std::string& a_Ip6,
                              uint16_t a_Port)
