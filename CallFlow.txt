@@ -1,0 +1,11 @@
+The command line args are parsed to get the IP and port. The IP is returned in network format for easy use later. SIGINT (Ctrl+C) is registerd by the signal handler function for graceful termination of program.
+
+The main logic of the Dns forwarder is part of the ServerApp class. The Run() function sets up threads for processing packets. One thread for listening on port 9000 (on both IPv4 and v6) which pushes the received packets to a queue (m_PktQ) and then signals one of the worker thread. There is a pool of 10 worker threads (number can be controlled in code) which wait on a condition variable till it is woken up by the receiver thread when a packet is inserted in to the queue.
+The worker thread retrieves the packet from the queue and checks the transcation ID (first 2 bytes of packet) to see if it is a duplicate by checking another queue having previously processed packets' transcation ID. If the ID is found in the m_TxQ, then the packet is dropped.
+A LRU policy to cleanup the transcation ID queue of old entries. When the entries count reaches 1000, the oldest (front of queue) os popped out.
+This packet is forwarded to the upstread server and waits for a response with a 5 second timeout in case there are problems upstream.
+
+The Run() function, after spawning the threads checks for termination every 1 second so that the threads can be joined.
+
+A common PRINTER macro is used to print the traces to cout. PRINTER_ERNO macro is to print the stringified errno value to cerr.
+
